@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI & Plagiarism Detection Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .highlight-ai {
+            background-color: rgba(255, 99, 132, 0.3);
+            border-left: 3px solid #ff6384;
+        }
+        .highlight-plagiarized {
+            background-color: rgba(54, 162, 235, 0.3);
+            border-left: 3px solid #36a2eb;
+        }
+        .highlight-unique {
+            background-color: rgba(75, 192, 192, 0.3);
+            border-left: 3px solid #4bc0c0;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-4 py-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <h1 class="text-3xl font-bold">Content Authenticity Analyzer</h1>
+                        <p class="mt-2 opacity-90">Detect AI-generated and plagiarized content with precision</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/723e0f17-c93b-454e-94a8-5d88cc771040.png" alt="AI detection icon showing a robot face with a magnifying glass" class="rounded-full" />
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/24d54028-3516-468c-8bd7-ccaf3a0dc772.png" alt="Plagiarism detection icon showing document with highlighted text" class="rounded-full" />
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-8">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                <div class="p-6">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="w-full md:w-1/2">
+                            <h2 class="text-xl font-semibold mb-4">Enter Text to Analyze</h2>
+                            <textarea 
+                                id="input-text" 
+                                class="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                placeholder="Paste text here to analyze for AI content or plagiarism..."></textarea>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <button id="analyze-btn" class="px-4 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition">
+                                    Analyze Content
+                                </button>
+                                <button id="clear-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                    Clear
+                                </button>
+                                <button id="sample-btn" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition">
+                                    Load Sample
+                                </button>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-1/2">
+                            <h2 class="text-xl font-semibold mb-4">Detection Results</h2>
+                            <div id="results" class="p-4 bg-gray-50 rounded-lg min-h-64">
+                                <div class="text-center py-8">
+                                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/5216eee5-4a57-4059-b44c-520b7dd8122a.png" alt="Magnifying glass analyzing document with binary code overlay" class="mx-auto mb-4" />
+                                    <p class="text-gray-500">Analysis results will appear here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="detailed-results" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                    <div class="p-6">
+                        <h2 class="text-2xl font-bold mb-6 text-gradient">Detailed Analysis</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-4">AI Detection Metrics</h3>
+                                <canvas id="aiChart"></canvas>
+                                <div class="mt-4 space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">ChatGPT:</span>
+                                        <span id="gpt-score" class="font-bold">0%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Claude:</span>
+                                        <span id="claude-score" class="font-bold">0%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Gemini:</span>
+                                        <span id="gemini-score" class="font-bold">0%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Perplexity:</span>
+                                        <span id="perplexity-score" class="font-bold">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-4">Plagiarism Analysis</h3>
+                                <canvas id="plagiarismChart"></canvas>
+                                <div class="mt-4 space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Unique Content:</span>
+                                        <span id="unique-score" class="font-bold text-green-600">0%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Possible Plagiarism:</span>
+                                        <span id="plagiarism-score" class="font-bold text-red-600">0%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Sources Detected:</span>
+                                        <span id="sources-count" class="font-bold">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-lg font-semibold mb-2">Analyzed Text with Highlights</h3>
+                        <div id="highlighted-text" class="p-4 bg-gray-50 rounded-lg whitespace-pre-line"></div>
+                        
+                        <div class="mt-6" id="potential-sources">
+                            <h3 class="text-lg font-semibold mb-2">Potential Matching Sources</h3>
+                            <div class="space-y-2">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-gray-800 text-white py-6">
+            <div class="container mx-auto px-4 text-center">
+                <p>© 2023 Content Authenticity Analyzer. Uses advanced algorithms to detect AI-generated and plagiarized content.</p>
+                <p class="mt-2 text-gray-400 text-sm">Disclaimer: Results are probabilistic and should be verified independently.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const sampleBtn = document.getElementById('sample-btn');
+            const inputText = document.getElementById('input-text');
+            const resultsDiv = document.getElementById('results');
+            const detailedResultsDiv = document.getElementById('detailed-results');
+            const highlightedTextDiv = document.getElementById('highlighted-text');
+            
+            // Sample texts
+            const samples = {
+                humanWritten: "The industrial revolution marked a major turning point in history. Almost every aspect of daily life was influenced in some way. The transition to new manufacturing processes began in Britain in the late 18th century and gradually spread to other parts of the world. This period saw the replacement of hand production methods with machines, new chemical manufacturing processes, and improved efficiency of water power, the increasing use of steam power and the development of machine tools.",
+                chatGPT: "The Industrial Revolution was a pivotal era that transformed global society through technological innovation and industrial growth. Originating in Britain during the late 18th century, it introduced mechanized production systems that replaced traditional artisanal methods. This period witnessed groundbreaking advancements in manufacturing, including the development of steam engines, textile machinery, and iron production techniques. The revolution significantly boosted economic productivity and catalyzed urbanization, fundamentally altering social structures and working conditions worldwide.",
+                plagiarized: "The Industrial Revolution was the transition to new manufacturing processes in Europe and the United States, in the period from about 1760 to sometime between 1820 and 1840. It marked a major turning point in history; almost every aspect of daily life was influenced in some way."
+            };
+
+            // Initialize charts
+            const aiChartCtx = document.getElementById('aiChart').getContext('2d');
+            const aiChart = new Chart(aiChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Human', 'ChatGPT', 'Claude', 'Gemini', 'Perplexity'],
+                    datasets: [{
+                        data: [100, 0, 0, 0, 0],
+                        backgroundColor: [
+                            '#4bc0c0',
+                            '#ff6384',
+                            '#ff9f40',
+                            '#9966ff',
+                            '#ffcd56'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            const plagiarismChartCtx = document.getElementById('plagiarismChart').getContext('2d');
+            const plagiarismChart = new Chart(plagiarismChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Unique', 'Possible Plagiarism'],
+                    datasets: [{
+                        data: [100, 0],
+                        backgroundColor: [
+                            '#36a2eb',
+                            '#ff6384'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Event Listeners
+            analyzeBtn.addEventListener('click', analyzeContent);
+            clearBtn.addEventListener('click', resetTool);
+            sampleBtn.addEventListener('click', loadSample);
+
+            // Sample analysis function (mock for demo purposes)
+            function analyzeContent() {
+                const text = inputText.value.trim();
+                if (!text) {
+                    alert('Please enter some text to analyze');
+                    return;
+                }
+
+                // Show loading state
+                resultsDiv.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+                        <p class="text-gray-600">Analyzing content...</p>
+                    </div>
+                `;
+
+                // Simulate API delay
+                setTimeout(() => {
+                    // Mock analysis results
+                    const aiLikelihood = Math.random() * 80;
+                    const isAI = aiLikelihood > 50;
+                    
+                    // Determine likely model (for demo)
+                    const modelScores = {
+                        'ChatGPT': Math.floor(Math.random() * 40) + (isAI ? 30 : 0),
+                        'Claude': Math.floor(Math.random() * 30) + (isAI ? 20 : 0),
+                        'Gemini': Math.floor(Math.random() * 20) + (isAI ? 10 : 0),
+                        'Perplexity': Math.floor(Math.random() * 15) + (isAI ? 5 : 0)
+                    };
+                    
+                    // Adjust to make sum <= 100
+                    const total = Object.values(modelScores).reduce((a, b) => a + b, 0);
+                    if (total > 100) {
+                        for (let model in modelScores) {
+                            modelScores[model] = Math.floor((modelScores[model] / total) * 100);
+                        }
+                    }
+                    
+                    // Plagiarism detection
+                    const plagiarismScore = text.length > 100 ? Math.min(30 + Math.random() * 20, 80) : 0;
+                    const uniqueScore = 100 - plagiarismScore;
+                    
+                    // Update results display
+                    displayResults(text, modelScores, plagiarismScore, uniqueScore);
+                    
+                    // Update charts
+                    updateCharts(modelScores, plagiarismScore, uniqueScore);
+                    
+                    // Show detailed results
+                    detailedResultsDiv.classList.remove('hidden');
+                    
+                    // Scroll to results
+                    detailedResultsDiv.scrollIntoView({ behavior: 'smooth' });
+                }, 2000);
+            }
+
+            function displayResults(text, modelScores, plagiarismScore, uniqueScore) {
+                // Update model scores
+                document.getElementById('gpt-score').textContent = `${modelScores.ChatGPT}%`;
+                document.getElementById('claude-score').textContent = `${modelScores.Claude}%`;
+                document.getElementById('gemini-score').textContent = `${modelScores.Gemini}%`;
+                document.getElementById('perplexity-score').textContent = `${modelScores.Perplexity}%`;
+                document.getElementById('plagiarism-score').textContent = `${plagiarismScore.toFixed(1)}%`;
+                document.getElementById('unique-score').textContent = `${uniqueScore.toFixed(1)}%`;
+                
+                // Generate random number of sources (for demo)
+                const sourcesCount = Math.floor(Math.random() * 4);
+                document.getElementById('sources-count').textContent = sourcesCount;
+                
+                // Highlight text with mock analysis (for demo)
+                let highlightedHTML = '';
+                const sentences = text.split(/(?<=[.!?])\s+/);
+                sentences.forEach(sentence => {
+                    // Randomly classify sentences for demo purposes
+                    const rand = Math.random();
+                    if (rand < 0.2) {
+                        // AI generated
+                        highlightedHTML += `<span class="highlight-ai">${sentence}</span> `;
+                    } else if (rand < 0.4) {
+                        // Plagiarized
+                        highlightedHTML += `<span class="highlight-plagiarized">${sentence}</span> `;
+                    } else {
+                        // Unique
+                        highlightedHTML += `<span class="highlight-unique">${sentence}</span> `;
+                    }
+                });
+                highlightedTextDiv.innerHTML = highlightedHTML;
+                
+                // Generate mock sources (for demo)
+                const sourcesDiv = document.querySelector('#potential-sources div');
+                sourcesDiv.innerHTML = '';
+                if (sourcesCount > 0) {
+                    for (let i = 0; i < sourcesCount; i++) {
+                        sourcesDiv.innerHTML += `
+                            <div class="p-3 bg-gray-100 rounded-lg">
+                                <h4 class="font-medium">Potential Match #${i+1}</h4>
+                                <p class="text-sm text-gray-600">Similarity: ${Math.floor(60 + Math.random() * 30)}%</p>
+                                <p class="text-sm text-gray-600">Source: <a href="#" class="text-blue-500">example.com/article${Math.floor(Math.random() * 1000)}</a></p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    sourcesDiv.innerHTML = '<p class="text-gray-500">No matching sources found</p>';
+                }
+            }
+
+            function updateCharts(modelScores, plagiarismScore, uniqueScore) {
+                // AI chart data
+                const humanScore = 100 - Object.values(modelScores).reduce((a, b) => a + b, 0);
+                aiChart.data.datasets[0].data = [
+                    humanScore,
+                    modelScores.ChatGPT,
+                    modelScores.Claude,
+                    modelScores.Gemini,
+                    modelScores.Perplexity
+                ];
+                aiChart.update();
+                
+                // Plagiarism chart data
+                plagiarismChart.data.datasets[0].data = [
+                    uniqueScore,
+                    plagiarismScore
+                ];
+                plagiarismChart.update();
+            }
+
+            function resetTool() {
+                inputText.value = '';
+                resultsDiv.innerHTML = `
+                    <div class="text-center py-8">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/19ec60ed-9297-418e-b376-52603a9ec626.png" alt="Magnifying glass analyzing document with binary code overlay" class="mx-auto mb-4" />
+                        <p class="text-gray-500">Analysis results will appear here</p>
+                    </div>
+                `;
+                detailedResultsDiv.classList.add('hidden');
+            }
+
+            function loadSample() {
+                const sampleType = Math.random() > 0.5 ? 'chatGPT' : (Math.random() > 0.5 ? 'plagiarized' : 'humanWritten');
+                inputText.value = samples[sampleType];
+            }
+        });
+    </script>
+</body>
+</html>
+
+
